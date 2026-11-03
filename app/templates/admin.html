@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin</title><link rel="stylesheet" href="/static/style.css"><meta name="robots" content="noindex"></head>
+<body><main class="wrap"><section class="card">
+<h2>Admin</h2>
+{% if saved %}<p class="notice">Saved.</p>{% endif %}
+<p class="muted">{{ members }} members loaded · {{ logs }} requests logged ·
+  <a href="/admin/log.csv">Download request log (CSV)</a> · <a href="/">View site</a></p>
+<form method="post" action="/admin">
+  <label for="voting_link">Voting link (leave blank to show "coming soon")</label>
+  <input id="voting_link" name="voting_link" type="url" value="{{ s.voting_link }}" placeholder="https://...">
+  <label for="process_bullets">Voting process bullets (one per line)</label>
+  <textarea id="process_bullets" name="process_bullets" rows="6">{{ bullets_text }}</textarea>
+  <label for="contact_number">Contact number (tel: format, e.g. +919900956977)</label>
+  <input id="contact_number" name="contact_number" type="text" value="{{ s.contact_number }}">
+  <button class="btn" type="submit">Save</button>
+</form></section></main></body></html>

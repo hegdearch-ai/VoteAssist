@@ -1,0 +1,12 @@
+{% if notice %}<p class="notice">{{ notice }}</p>{% endif %}
+{% if error %}<p class="alert" role="alert">{{ error }}</p>{% endif %}
+<form hx-post="/otp/verify" hx-target="#panel" hx-swap="innerHTML">
+  <input type="hidden" name="identifier" value="{{ identifier }}">
+  <label for="code">Enter 6-digit code</label>
+  <input id="code" name="code" class="otp" type="text" inputmode="numeric" autocomplete="one-time-code"
+         pattern="[0-9]{6}" maxlength="6" placeholder="······" required autofocus>
+  <button class="btn" type="submit">Show my Membership No</button>
+</form>
+<p class="muted small">Didn't get it? Check spam, or
+  <a href="#find" hx-post="/otp/request" hx-vals='{"identifier": "{{ identifier|e }}"}' hx-target="#panel">send again</a>.
+  Need help? <a href="tel:{{ s.contact_number }}">Call us</a>.</p>

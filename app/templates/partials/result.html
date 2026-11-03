@@ -1,0 +1,11 @@
+<div class="result">
+  <p class="muted">Verified. Dear {{ member.name }},</p>
+  <p class="label">Your Membership No</p>
+  <p class="mid">{{ member.member_id }}</p>
+  <p class="muted small">Please note it down: for security this is shown only once.</p>
+  {% if s.voting_link %}
+    <a class="btn alt" href="{{ s.voting_link }}" target="_blank" rel="noopener">Go to the voting page →</a>
+  {% else %}
+    <p class="muted">Voting link will be shared soon. Voting dates: {{ s.voting_dates }}.</p>
+  {% endif %}
+</div>

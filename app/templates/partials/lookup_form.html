@@ -1,0 +1,7 @@
+{% if error %}<p class="alert" role="alert">{{ error }}</p>{% endif %}
+<form hx-post="/otp/request" hx-target="#panel" hx-swap="innerHTML">
+  <label for="identifier">Registered email or mobile number</label>
+  <input id="identifier" name="identifier" type="text" inputmode="email" autocomplete="email"
+         placeholder="name@example.com or 98XXXXXXXX" maxlength="120" value="{{ identifier or '' }}" required>
+  <button class="btn" type="submit">Send code to my email</button>
+</form>

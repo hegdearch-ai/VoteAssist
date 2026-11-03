@@ -1,0 +1,66 @@
+candidate:
+  name: Professor Madhav Hegde, MD
+  short_name: Dr. Madhav Hegde
+  title: Senior Consultant Radiologist
+  candidacy: Candidate for President Elect · Karnataka State IRIA
+  election: IRIA Karnataka Election 2026
+  tagline: Listening. Bringing people together. Turning aspirations into action.
+
+contact:
+  phone: "+919900956977"
+  phone_display: "+91 99009 56977"
+  email: docmadhavhegde@gmail.com
+  website: https://docradiologist.com
+  website_label: docradiologist.com
+
+stats:
+  - { value: "20", label: "Years of service" }
+  - { value: "15+", label: "Years serving IRIA" }
+  - { value: "100+", label: "Presentations & lectures" }
+  - { value: "25+", label: "Articles & textbook chapters" }
+
+roles:
+  - State & Central Council
+  - Joint Secretary
+  - Vice President
+
+appeal: >-
+  Dear Colleague, today I am seeking your support as I contest for the post of
+  President Elect. With your trust and support, I hope to contribute to the next
+  chapter of our society's growth. I humbly seek your support and vote.
+
+vision:
+  - Member-centric society
+  - Stronger academic and professional opportunities
+  - Meaningful support for radiologists at every stage of their careers
+  - A progressive approach to the AI era of medical imaging
+
+quote: >-
+  I believe leadership is about listening, bringing people together and turning
+  collective aspirations into action.
+
+journey:
+  - "20 years of service across government & private institutions, corporate hospitals and large diagnostic chains"
+  - "100+ scientific presentations / lectures across India, Asia, Europe and North America"
+  - "25+ articles in leading journals and textbooks"
+  - "Cardiac Imaging Subspeciality Expertise: part of pioneering cardiac imaging in Karnataka"
+  - "Introduced the RA-MA (Ravindran-Madhav) ratio for coronary artery myocardial bridging"
+  - "Served as Chief Editor, IJ of Radiology of Infectious Diseases"
+  - "Core team of dozens of CMEs and state and national conferences"
+
+voting:
+  dates: 11–15 Nov 2026
+  default_link: ""        # set from /admin, no redeploy needed
+  default_process:        # set from /admin
+    []
+
+# Shown in the footer only if set
+official_source_url: ""
+
+disclaimer: >-
+  This is a candidate's campaign page. It is not run by, or endorsed by, the
+  official IRIA election authority.
+privacy: >-
+  Your lookup requests are logged (with email/phone masked) to prevent misuse
+  and are deleted after the election. Your details are used only to find your
+  Membership No.
