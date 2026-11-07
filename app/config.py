@@ -11,9 +11,9 @@ ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
 EMAIL_API_KEY = os.getenv("EMAIL_API_KEY", "")
 EMAIL_FROM = os.getenv("EMAIL_FROM", "Madhav Hegde Campaign <otp@mail.ibrag.co.in>")
 EMAIL_REPLY_TO = os.getenv("EMAIL_REPLY_TO", "docmadhavhegde@gmail.com")
-LOOKUP_MODE = os.getenv("LOOKUP_MODE", "direct").strip().lower()  # "direct" | "otp" | "show"
+LOOKUP_MODE = os.getenv("LOOKUP_MODE", "show").strip().lower()  # "direct" | "otp" | "show"
 if LOOKUP_MODE not in ("direct", "otp", "show"):
-    LOOKUP_MODE = "direct"
+    LOOKUP_MODE = "show"
 INTERAKT_API_KEY = os.getenv("INTERAKT_API_KEY", "").strip()
 WA_TEMPLATE_MEMBER_ID = os.getenv("WA_TEMPLATE_MEMBER_ID", "").strip()
 ENABLED_ADDONS = [a.strip() for a in os.getenv("ENABLED_ADDONS", "").split(",") if a.strip()]

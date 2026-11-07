@@ -17,9 +17,9 @@ Add Postgres, reference `DATABASE_URL`, set `OTP_SECRET`, `ADMIN_PASSWORD`, `EMA
 
 ## Lookup modes
 `LOOKUP_MODE` env var:
-- `direct` (default): `POST /lookup` sends the Membership No to the member's email (and WhatsApp if enabled). The page always shows the same generic message and never the number. `/otp/*` return 404.
+- `direct`: `POST /lookup` sends the Membership No to the member's email (and WhatsApp if enabled). The page always shows the same generic message and never the number. `/otp/*` return 404.
 - `otp`: the original email-OTP flow (`/otp/request`, `/otp/verify`); `/lookup` returns 404.
-- `show`: `POST /lookup` shows the Membership No on the page with no verification. If the email isn't found it asks for the mobile number (and vice versa); if both fail it shows the contact number to call. Note: this reveals whether an email/mobile is registered. `/otp/*` return 404.
+- `show` (default): `POST /lookup` shows the Membership No on the page with no verification. If the email isn't found it asks for the mobile number (and vice versa); if both fail it shows the contact number to call. Note: this reveals whether an email/mobile is registered. `/otp/*` return 404.
 
 Switch by setting `LOOKUP_MODE` and restarting. Limits: 10 lookups per IP per hour, 3 sends per member per hour.
 
