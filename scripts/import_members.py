@@ -16,8 +16,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import openpyxl  # noqa: E402
 
-from app.db import Member, SessionLocal, init_db  # noqa: E402
+from sqlalchemy import select  # noqa: E402
+from sqlalchemy.dialects.postgresql import insert as pg_insert  # noqa: E402
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert  # noqa: E402
+
+from app.db import Member, engine, init_db  # noqa: E402
 from app.services.members import mask_email, norm_email, norm_phone  # noqa: E402
+
+BATCH = 500
 
 ALIASES = {
     "sr_no": ["srno", "sno", "slno", "serialno"],
@@ -50,9 +56,7 @@ def main(path: str) -> None:
     def get(row, f):
         return row[col[f]] if f in col and col[f] < len(row) else None
 
-    init_db()
-    db = SessionLocal()
-    seen, added, updated, skipped, no_email, no_phone = set(), 0, 0, 0, 0, 0
+    records, seen, skipped, no_email, no_phone = [], set(), 0, 0, 0
     for row in rows:
         mid = str(get(row, "member_id") or "").strip()
         if mid.endswith(".0"):
@@ -66,21 +70,28 @@ def main(path: str) -> None:
         no_email += email is None
         no_phone += phone is None
         sr = get(row, "sr_no")
-        data = dict(sr_no=int(sr) if isinstance(sr, (int, float)) else None, name=name,
-                    email_norm=email, phone_e164=phone, email_masked=mask_email(email),
-                    city=(str(get(row, "city")).strip() if get(row, "city") else None))
-        existing = db.get(Member, mid)
-        if existing:
-            for k, v in data.items():
-                setattr(existing, k, v)
-            updated += 1
-        else:
-            db.add(Member(member_id=mid, **data))
-            added += 1
-    db.commit()
-    print(f"added={added} updated={updated} skipped={skipped} "
-          f"without_email={no_email} without_valid_mobile={no_phone}")
+        records.append(dict(member_id=mid, sr_no=int(sr) if isinstance(sr, (int, float)) else None,
+                            name=name, email_norm=email, phone_e164=phone,
+                            email_masked=mask_email(email),
+                            city=(str(get(row, "city")).strip() if get(row, "city") else None)))
+    print(f"read {len(records)} members from Excel; uploading in batches of {BATCH}...")
 
+    init_db()
+    insert = pg_insert if engine.dialect.name == "postgresql" else sqlite_insert
+    with engine.connect() as conn:
+        existing = set(conn.execute(select(Member.member_id)).scalars())
+    for i in range(0, len(records), BATCH):
+        chunk = records[i:i + BATCH]
+        stmt = insert(Member).values(chunk)
+        stmt = stmt.on_conflict_do_update(
+            index_elements=[Member.member_id],
+            set_={c: stmt.excluded[c] for c in chunk[0] if c != "member_id"})
+        with engine.begin() as conn:   # one short transaction per batch
+            conn.execute(stmt)
+        print(f"  uploaded {min(i + BATCH, len(records))}/{len(records)}")
+    added = sum(r["member_id"] not in existing for r in records)
+    print(f"added={added} updated={len(records) - added} skipped={skipped} "
+          f"without_email={no_email} without_valid_mobile={no_phone}")
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
