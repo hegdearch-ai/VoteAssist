@@ -1,7 +1,8 @@
 {% if error %}<p class="alert" role="alert">{{ error }}</p>{% endif %}
-<form hx-post="{{ '/lookup' if lookup_mode == 'direct' else '/otp/request' }}" hx-target="#panel" hx-swap="innerHTML">
+<form hx-post="{{ '/otp/request' if lookup_mode == 'otp' else '/lookup' }}" hx-target="#panel" hx-swap="innerHTML">
+  {% if tried %}<input type="hidden" name="tried" value="{{ tried }}">{% endif %}
   <label for="identifier">Registered email or mobile number</label>
   <input id="identifier" name="identifier" type="text" inputmode="email" autocomplete="email"
          placeholder="name@example.com or 98XXXXXXXX" maxlength="120" value="{{ identifier or '' }}" required>
-  <button class="btn" type="submit">{{ 'Send my Membership No' if lookup_mode == 'direct' else 'Send code to my email' }}</button>
+  <button class="btn" type="submit">{% if lookup_mode == 'otp' %}Send code to my email{% elif lookup_mode == 'show' %}Show my Membership No{% else %}Send my Membership No{% endif %}</button>
 </form>

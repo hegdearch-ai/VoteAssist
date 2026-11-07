@@ -19,7 +19,7 @@ from .config import (ADMIN_PASSWORD, BASE_DIR, CONTENT, ENABLED_ADDONS,
 from .db import Member, RequestLog, SessionLocal, get_db, init_db
 from .services.delivery import send_member_id
 from .services.logging import count_recent, count_recent_member, hash_ip, log_request
-from .services.members import find_member, mask_identifier
+from .services.members import find_member, mask_identifier, norm_email, norm_phone
 from .services.otp import issue_otp, verify_otp
 from .services.settings import KEYS, get_setting, public_settings, set_setting
 
@@ -87,10 +87,24 @@ def lookup_form(request: Request, db: Session = Depends(get_db)):
     return render(request, "partials/lookup_form.html", s=public_settings(db))
 
 
+RETRY_MSG = {
+    "email": "We couldn't find a member with that email. Please try your registered mobile number instead.",
+    "phone": "We couldn't find a member with that mobile number. Please try your registered email instead.",
+}
+
+
+def _identifier_kind(raw: str) -> str | None:
+    if norm_email(raw):
+        return "email"
+    if norm_phone(raw):
+        return "phone"
+    return None
+
+
 @app.post("/lookup", response_class=HTMLResponse)
 def lookup(request: Request, identifier: str = Form(..., max_length=120),
-           db: Session = Depends(get_db)):
-    if config.LOOKUP_MODE != "direct":
+           tried: str = Form("", max_length=20), db: Session = Depends(get_db)):
+    if config.LOOKUP_MODE not in ("direct", "show"):
         raise HTTPException(404)
     ip = hash_ip(client_ip(request))
     masked = mask_identifier(identifier)
@@ -102,9 +116,28 @@ def lookup(request: Request, identifier: str = Form(..., max_length=120),
                       error="Too many attempts. Please try again after some time or call us.",
                       s=s, identifier=identifier)
 
+    if config.LOOKUP_MODE == "show":
+        kind = _identifier_kind(identifier)
+        if not kind:
+            return render(request, "partials/lookup_form.html", s=s, identifier=identifier,
+                          tried=tried, error="Please enter a valid email or 10-digit mobile number.")
+
     member = find_member(db, identifier)
     log_request(db, type="lookup", outcome="matched" if member else "not_found",
                 member_id=member.member_id if member else None, identifier_masked=masked, ip_hash=ip)
+
+    if config.LOOKUP_MODE == "show":
+        if member:
+            log_request(db, type="id_shown", outcome="shown", member_id=member.member_id,
+                        identifier_masked=masked, ip_hash=ip)
+            resp = render(request, "partials/result.html", member=member, s=s)
+            resp.headers["Cache-Control"] = "no-store"
+            return resp
+        done = {t for t in tried.split(",") if t in ("email", "phone")} | {kind}
+        if done >= {"email", "phone"}:
+            return render(request, "partials/not_found.html", s=s)
+        return render(request, "partials/lookup_form.html", s=s, error=RETRY_MSG[kind],
+                      tried=",".join(sorted(done)))
 
     if member:
         if count_recent_member(db, type="id_sent", member_id=member.member_id,
