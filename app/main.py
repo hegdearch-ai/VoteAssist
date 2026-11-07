@@ -13,10 +13,12 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
+from . import config
 from .config import (ADMIN_PASSWORD, BASE_DIR, CONTENT, ENABLED_ADDONS,
-                     LOOKUPS_PER_IP_PER_HOUR, OTP_TTL_MIN)
+                     ID_SENDS_PER_MEMBER_PER_HOUR, LOOKUPS_PER_IP_PER_HOUR, OTP_TTL_MIN)
 from .db import Member, RequestLog, SessionLocal, get_db, init_db
-from .services.logging import count_recent, hash_ip, log_request
+from .services.delivery import send_member_id
+from .services.logging import count_recent, count_recent_member, hash_ip, log_request
 from .services.members import find_member, mask_identifier
 from .services.otp import issue_otp, verify_otp
 from .services.settings import KEYS, get_setting, public_settings, set_setting
@@ -56,7 +58,8 @@ def client_ip(request: Request) -> str:
 
 
 def render(request: Request, name: str, **ctx):
-    return templates.TemplateResponse(request, name, {"c": CONTENT, **ctx})
+    return templates.TemplateResponse(
+        request, name, {"c": CONTENT, "lookup_mode": config.LOOKUP_MODE, **ctx})
 
 
 GENERIC_SENT = ("If this matches a registered member, a 6-digit code has been sent to the "
@@ -75,9 +78,55 @@ def index(request: Request, db: Session = Depends(get_db)):
     return render(request, "index.html", s=public_settings(db), addon_widgets=ADDON_WIDGETS)
 
 
+GENERIC_ID_SENT = ("If you are a registered member, your Membership No has been sent to your "
+                   "registered email and WhatsApp number. Please check your inbox (and spam folder).")
+
+
+@app.get("/lookup-form", response_class=HTMLResponse)
+def lookup_form(request: Request, db: Session = Depends(get_db)):
+    return render(request, "partials/lookup_form.html", s=public_settings(db))
+
+
+@app.post("/lookup", response_class=HTMLResponse)
+def lookup(request: Request, identifier: str = Form(..., max_length=120),
+           db: Session = Depends(get_db)):
+    if config.LOOKUP_MODE != "direct":
+        raise HTTPException(404)
+    ip = hash_ip(client_ip(request))
+    masked = mask_identifier(identifier)
+    s = public_settings(db)
+
+    if count_recent(db, type="lookup", ip_hash=ip) >= LOOKUPS_PER_IP_PER_HOUR:
+        log_request(db, type="lookup", outcome="ip_limited", identifier_masked=masked, ip_hash=ip)
+        return render(request, "partials/lookup_form.html",
+                      error="Too many attempts. Please try again after some time or call us.",
+                      s=s, identifier=identifier)
+
+    member = find_member(db, identifier)
+    log_request(db, type="lookup", outcome="matched" if member else "not_found",
+                member_id=member.member_id if member else None, identifier_masked=masked, ip_hash=ip)
+
+    if member:
+        if count_recent_member(db, type="id_sent", member_id=member.member_id,
+                               exclude_outcome="rate_limited") >= ID_SENDS_PER_MEMBER_PER_HOUR:
+            log_request(db, type="id_sent", outcome="rate_limited", member_id=member.member_id,
+                        identifier_masked=masked, ip_hash=ip)
+        else:
+            res = send_member_id(member, s)
+            log_request(db, type="id_sent", member_id=member.member_id, identifier_masked=masked,
+                        outcome=f"email:{res['email']},wa:{res['whatsapp']}", ip_hash=ip)
+
+    # Identical response whether or not a member was found / limited (no enumeration)
+    resp = render(request, "partials/sent.html", notice=GENERIC_ID_SENT, s=s)
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
 @app.post("/otp/request", response_class=HTMLResponse)
 def otp_request(request: Request, identifier: str = Form(..., max_length=120),
                 db: Session = Depends(get_db)):
+    if config.LOOKUP_MODE != "otp":
+        raise HTTPException(404)
     ip = hash_ip(client_ip(request))
     masked = mask_identifier(identifier)
 
@@ -108,6 +157,8 @@ def otp_request(request: Request, identifier: str = Form(..., max_length=120),
 @app.post("/otp/verify", response_class=HTMLResponse)
 def otp_verify(request: Request, identifier: str = Form(..., max_length=120),
                code: str = Form(..., max_length=10), db: Session = Depends(get_db)):
+    if config.LOOKUP_MODE != "otp":
+        raise HTTPException(404)
     ip = hash_ip(client_ip(request))
     masked = mask_identifier(identifier)
     member = find_member(db, identifier)

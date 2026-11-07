@@ -18,7 +18,11 @@
 
   <section class="card find" id="find">
     <h2>Find my Membership No</h2>
+    {% if lookup_mode == 'direct' %}
+    <p class="muted">Enter your registered email or mobile number. We'll send your Membership No to the email and WhatsApp on file.</p>
+    {% else %}
     <p class="muted">Enter your registered email or mobile number. We will email a one-time code to the address on file.</p>
+    {% endif %}
     <div id="panel">{% include "partials/lookup_form.html" %}</div>
   </section>
 

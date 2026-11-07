@@ -26,3 +26,13 @@ def count_recent(db: Session, *, type: str, ip_hash: str, minutes: int = 60) -> 
     since = utcnow() - timedelta(minutes=minutes)
     return db.scalar(select(func.count()).select_from(RequestLog).where(
         RequestLog.type == type, RequestLog.ip_hash == ip_hash, RequestLog.ts >= since)) or 0
+
+
+def count_recent_member(db: Session, *, type: str, member_id: str, minutes: int = 60,
+                        exclude_outcome: str | None = None) -> int:
+    since = utcnow() - timedelta(minutes=minutes)
+    q = select(func.count()).select_from(RequestLog).where(
+        RequestLog.type == type, RequestLog.member_id == member_id, RequestLog.ts >= since)
+    if exclude_outcome:
+        q = q.where(RequestLog.outcome != exclude_outcome)
+    return db.scalar(q) or 0

@@ -1,4 +1,5 @@
 import logging
+from html import escape
 
 import httpx
 
@@ -43,3 +44,26 @@ def send_otp_email(to: str, name: str, code: str, ttl_min: int) -> bool:
 <p>Valid for {ttl_min} minutes. If you did not request this, please ignore this email.</p>
 <p style="color:#777;font-size:12px">Campaign page of Dr. Madhav Hegde, IRIA Karnataka President-Elect candidate.</p></div>"""
     return send_email(to, f"Your verification code: {code}", html, text)
+
+
+def send_member_id_email(to: str, name: str, member_id: str, voting_dates: str,
+                         voting_link: str) -> bool:
+    link_text = voting_link if voting_link else "Voting link will be shared soon"
+    text = (f"Dear {name},\n\nYour IRIA Membership No is: {member_id}\n\n"
+            f"Voting dates: {voting_dates}\nVoting link: {link_text}\n\n"
+            "If you did not request this, you can ignore this email.\n\n"
+            "This is an automated message; replies go to the campaign contact.")
+    n, m, d = escape(name), escape(member_id), escape(voting_dates)
+    if voting_link:
+        link_html = (f'<a href="{escape(voting_link, quote=True)}" '
+                     f'style="color:#2f5e22">{escape(voting_link)}</a>')
+    else:
+        link_html = "Voting link will be shared soon"
+    html = f"""<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;color:#222">
+<p>Dear {n},</p>
+<p>Your IRIA Membership No is:</p>
+<p style="font-size:32px;font-weight:700;color:#2f5e22;margin:16px 0">{m}</p>
+<p>Voting dates: <b>{d}</b><br>Voting link: {link_html}</p>
+<p>If you did not request this, you can ignore this email.</p>
+<p style="color:#777;font-size:12px">Campaign page of Dr. Madhav Hegde, IRIA Karnataka President-Elect candidate.</p></div>"""
+    return send_email(to, "Your IRIA Membership No", html, text)
