@@ -1,5 +1,6 @@
 # Exact pins: these builds' compiled files are allowed by Windows Smart App Control.
 # Newer builds (e.g. SQLAlchemy 2.1.x, psycopg 3.3.8) are blocked, so upgrade deliberately.
+# SQLAlchemy 2.0.23 does not support Python 3.13+, so .python-version pins 3.12 for deploys.
 fastapi==0.162.2
 uvicorn[standard]==0.54.0
 jinja2==3.1.6
