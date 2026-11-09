@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 
 from app import config, main
 from app.db import RequestLog
+from app.services.settings import set_setting
 from tests.test_lookup import SessionLocal, setup  # noqa: F401  (shared DB + autouse fixture)
 
 TRY_MOBILE = "Please try your registered mobile number instead"
@@ -32,6 +33,27 @@ def test_found_by_email_shows_id(client, setup):  # noqa: F811
     assert "KA12345" in r.text and "Asha Rao" in r.text and "Verified" not in r.text
     assert r.headers["cache-control"] == "no-store"
     assert setup["email"] == [] and setup["wa"] == []
+
+
+def test_result_has_copy_button_and_steps(client):
+    r = post(client, "asha@example.com")
+    assert 'data-copy="KA12345"' in r.text and "Copy Membership No" in r.text
+    assert "How to vote" in r.text and "paste it in and cast your vote" in r.text
+    assert "once the link is shared" in r.text  # no voting link configured
+
+
+def test_steps_point_to_voting_link_when_set(client):
+    db = SessionLocal()
+    set_setting(db, "voting_link", "https://vote.example.org")
+    db.close()
+    r = post(client, "asha@example.com")
+    assert "Open the voting page using the button below" in r.text
+    assert 'href="https://vote.example.org"' in r.text
+
+
+def test_copy_script_served(client):
+    assert 'src="/static/copy.js"' in client.get("/").text
+    assert "data-copy" in client.get("/static/copy.js").text
 
 
 def test_found_by_phone_shows_id(client):

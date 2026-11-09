@@ -1,12 +1,24 @@
 <div class="result">
   <p class="muted">{% if lookup_mode == 'otp' %}Verified. {% endif %}Dear {{ member.name }},</p>
   <p class="label">Your Membership No</p>
-  <p class="mid">{{ member.member_id }}</p>
+  <p class="mid" id="member-id">{{ member.member_id }}</p>
+  <button type="button" class="btn ghost copy" data-copy="{{ member.member_id }}" data-copy-target="member-id">Copy Membership No</button>
+  <p class="muted small copy-status" role="status" aria-live="polite"></p>
   {% if lookup_mode == 'otp' %}
   <p class="muted small">Please note it down: for security this is shown only once.</p>
-  {% else %}
-  <p class="muted small">Please note it down for voting.</p>
   {% endif %}
+
+  <h3>How to vote</h3>
+  <ol class="steps">
+    <li>Tap <strong>Copy Membership No</strong> above.</li>
+    {% if s.voting_link %}
+    <li>Open the voting page using the button below.</li>
+    {% else %}
+    <li>Open the voting page once the link is shared (voting dates: {{ s.voting_dates }}).</li>
+    {% endif %}
+    <li>When the voting page asks for your Membership No, paste it in and cast your vote.</li>
+  </ol>
+
   {% if s.voting_link %}
     <a class="btn alt" href="{{ s.voting_link }}" target="_blank" rel="noopener">Go to the voting page →</a>
   {% else %}

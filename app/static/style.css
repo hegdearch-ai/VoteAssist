@@ -47,7 +47,12 @@ blockquote{margin:1rem 0;padding:.4rem 0 .4rem 14px;border-left:4px solid var(--
 .notice{background:#eaf4e4;color:#1d4a11;border-radius:10px;padding:10px 12px;margin:.5rem 0}
 .result{text-align:center}
 .result .label{margin:.6rem 0 0;font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-.result .mid{font:800 2.6rem Georgia,serif;color:var(--green);margin:0;word-break:break-all}
+.result .mid{font:800 2.6rem Georgia,serif;color:var(--green);margin:0;word-break:break-all;user-select:all}
+.result .copy{width:auto;display:inline-block;margin:10px auto 0;padding:9px 18px}
+.result .copy-status{min-height:1.2em;margin:.4rem 0 0}
+.result h3{margin:1.2rem 0 .3rem}
+.steps{text-align:left;margin:.3rem 0 .6rem;padding-left:1.4rem}
+.steps li{margin:.35rem 0}
 .htmx-request .btn{opacity:.6;pointer-events:none}
 footer{background:var(--green);color:#e9f1e4;padding:18px 0 28px;margin-top:8px}
 footer a{color:#f6c548}
